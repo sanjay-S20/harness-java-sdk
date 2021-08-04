@@ -17,14 +17,55 @@
 
 package com.actionml;
 
+import akka.http.javadsl.model.Uri;
+import akka.japi.Pair;
+import akka.stream.javadsl.Source;
+
+import java.net.PasswordAuthentication;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CompletionStage;
+
 /**
  * @author The ActionML Team (<a href="http://actionml.com">http://actionml.com</a>)
  *         26.02.17 18:02
  */
-public class HarnessClient {
+public class HarnessClient extends RestClient {
 
-    public HarnessClient(String host, Integer port, String clientId, String clientSecret) {
-
+    public HarnessClient(String engineId, String host, Integer port, Optional<PasswordAuthentication> optionalCreds) {
+        super(host, port, Uri.create("/engines").addPathSegment(engineId).addPathSegment("entities"), optionalCreds, Optional.empty());
     }
+
+    public CompletionStage<Pair<Integer, List<String>>> getEvents(String userId) {
+        return withAuth().thenCompose(optionalToken ->
+                Source.single(this.uri.addPathSegment(userId))
+                        .map(this::createGet)
+                        .zipWithIndex()
+                        .map(pair -> pair.copy(pair.first(), (Long) pair.second()))
+                        .via(this.poolClientFlow)
+                        .mapAsync(1, this::extractResponse)
+                        .mapAsync(1, this::extractResponses)
+                        .runFold(Pair.create(0, new ArrayList<>()), (acc, pair) -> {
+                            Integer code = pair.second().first();
+                            List<String> events = acc.second();
+                            events.add(pair.second().second());
+                            return Pair.create(code, events);
+                        }, this.materializer)
+        );
+    }
+
+    public CompletionStage<Integer> deleteEvents(String userId) {
+        return withAuth().thenCompose(optionalToken ->
+                Source.single(this.uri.addPathSegment(userId))
+                        .map(this::createDelete)
+                        .zipWithIndex()
+                        .map(pair -> pair.copy(pair.first(), (Long) pair.second()))
+                        .via(this.poolClientFlow)
+                        .mapAsync(1, this::extractResponse)
+                        .runFold(0, (a, i) -> i.second().status().intValue(), this.materializer)
+        );
+    }
+
 
 }

@@ -29,8 +29,8 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.*;
-import java.util.function.Function;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 /**
@@ -43,9 +43,25 @@ public class EventsClientExample {
 
     public static void main(String[] args) {
 
-        String serverHost = args[0]; // this should be https://... for TLS/SSL when Harness has TLS/SSL enabled
-        String engineId = args[1];
-        String fileName = args[2];
+        String serverHost = null;
+        try {
+            serverHost = args[0]; // this should be https://... for TLS/SSL when Harness has TLS/SSL enabled
+        } catch (Exception e) {
+            serverHost = "http://localhost";
+        }
+        String engineId = null;
+        try {
+            engineId = args[1];
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+        String fileName = null;
+        try {
+            fileName = args[2];
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         Integer serverPort = 9090;
 
         log.info("Args: {}, {}, {}, {}", engineId, fileName, serverHost, serverPort);
@@ -60,6 +76,11 @@ public class EventsClientExample {
         Optional<Path> cert = Optional.empty();
         EventsClient client = new EventsClient(engineId, serverHost, serverPort, optionalCreds, cert);
 
+        runCreateEvent(client, engineId, fileName);
+    }
+
+
+    private static void runCreateEvent(EventsClient client, String engineId, String fileName) {
         // example of JSON for creating an event
         String json = "{" +
                 "\"eventId\":\"ed15537661f2492cab64615096c93160\"," +
@@ -67,9 +88,9 @@ public class EventsClientExample {
                 "\"entityType\":\"testGroup\"," +
                 "\"entityId\":\"9\"," +
                 "\"properties\":{" +
-                    "\"testPeriodStart\":\"2016-07-12T00:00:00.000+09:00\"," +
-                    "\"pageVariants\":[\"17\",\"18\"]," +
-                    "\"testPeriodEnd\":\"2016-08-31T00:00:00.000+09:00\"}," +
+                "\"testPeriodStart\":\"2016-07-12T00:00:00.000+09:00\"," +
+                "\"pageVariants\":[\"17\",\"18\"]," +
+                "\"testPeriodEnd\":\"2016-08-31T00:00:00.000+09:00\"}," +
                 "\"eventTime\":\"2016-07-12T16:08:49.677+09:00\"," +
                 "\"creationTime\":\"2016-07-12T07:09:58.273Z\"}";
 
@@ -163,7 +184,5 @@ public class EventsClientExample {
             log.error("Oops, we have an unrecoverable error: ", e);
             client.close();
         }
-
     }
-
 }
