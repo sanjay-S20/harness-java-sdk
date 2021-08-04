@@ -61,10 +61,15 @@ public class HarnessClientExample {
         HarnessClient client = new HarnessClient(engineId, serverHost, serverPort, optionalCreds);
 
         runGetUserData(client, "u1");
+//        runDeleteUserData(client, "u1");
     }
 
 
     private static void runGetUserData(HarnessClient client, String userId) {
-        client.getEvents(userId).thenApply(x -> { System.out.println(x); return new Object(); });
+        client.deleteEvents(userId).thenAccept(System.out::println);
+    }
+
+    private static void runDeleteUserData(HarnessClient client, String userId) {
+        client.deleteEvents(userId).thenAccept(System.out::println);
     }
 }

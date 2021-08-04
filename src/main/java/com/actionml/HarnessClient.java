@@ -55,5 +55,17 @@ public class HarnessClient extends RestClient {
         );
     }
 
+    public CompletionStage<Integer> deleteEvents(String userId) {
+        return withAuth().thenCompose(optionalToken ->
+                Source.single(this.uri.addPathSegment(userId))
+                        .map(this::createDelete)
+                        .zipWithIndex()
+                        .map(pair -> pair.copy(pair.first(), (Long) pair.second()))
+                        .via(this.poolClientFlow)
+                        .mapAsync(1, this::extractResponse)
+                        .runFold(0, (a, i) -> i.second().status().intValue(), this.materializer)
+        );
+    }
+
 
 }
