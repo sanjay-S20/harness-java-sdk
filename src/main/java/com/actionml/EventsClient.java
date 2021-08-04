@@ -26,6 +26,7 @@ import akka.stream.javadsl.Source;
 import com.actionml.entity.Event;
 
 import java.net.PasswordAuthentication;
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
