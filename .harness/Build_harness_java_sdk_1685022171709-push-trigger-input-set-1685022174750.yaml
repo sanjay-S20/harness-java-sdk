@@ -1,0 +1,14 @@
+inputSet:
+  name: Build_harness_java_sdk_1685022171709-push-trigger-input-set
+  identifier: Build_harness_java_sdk_1685022171709pushtriggerinputset
+  orgIdentifier: default
+  projectIdentifier: default_project
+  pipeline:
+    identifier: Build_harness_java_sdk_1685022171709
+    properties:
+      ci:
+        codebase:
+          build:
+            type: branch
+            spec:
+              branch: <+trigger.branch>
